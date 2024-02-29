@@ -1,4 +1,4 @@
-import { buildSchema } from 'graphql';
+import { buildSchema } from 'graphql'
 
 export const schema = buildSchema(`
 
@@ -12,6 +12,7 @@ type Post {
     id: UUID!
     title: String
     content: String
+    authorId: String
 }
 
 type SubscribedToFromUserId {
@@ -45,6 +46,7 @@ type Profile {
     isMale: Boolean
     yearOfBirth: Int
     memberType: MemberType
+    userId: String
 }
 
 enum MemberTypeId {
@@ -66,4 +68,57 @@ type Query {
   subscribedToUsers: [SubscribedToUserArray]
   usersSubscribedTo: [UserSubscribedToArray]
 }
-`);
+
+
+input CreatePostInput {
+  title: String
+  content: String
+  authorId: String
+}
+
+input CreateUserInput {
+  name: String
+  balance: Float
+}
+
+input CreateProfileInput {
+  isMale: Boolean
+  yearOfBirth: Int
+  memberTypeId: String
+  userId: String
+}
+
+input ChangePostInput {
+  title: String
+  content: String
+  authorId: String
+}
+
+input ChangeUserInput {
+  name: String
+  balance: Float
+}
+
+input ChangeProfileInput {
+  isMale: Boolean
+  yearOfBirth: Int
+  memberTypeId: String
+  userId: String
+}
+
+type Mutation {
+  createPost(dto: CreatePostInput): Post
+  createUser(dto: CreateUserInput): User
+  createProfile(dto: CreateProfileInput): Profile
+  deletePost(id: UUID!): Boolean
+  deleteProfile(id: UUID!): Boolean
+  deleteUser(id: UUID!): Boolean
+  changePost(id: UUID!, dto: ChangePostInput): Post
+  changeUser(id: UUID!, dto: ChangeUserInput): User
+  changeProfile(id: UUID!, dto: ChangeProfileInput): Profile
+
+  subscribeTo(userId: UUID!, authorId: UUID!): User
+  unsubscribeFrom(userId: UUID!, authorId: UUID!): Boolean
+}
+`)
+

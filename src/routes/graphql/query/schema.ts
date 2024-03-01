@@ -22,13 +22,13 @@ type SubscribedToFromUserId {
 type UserSubscribedToArray {
   id: UUID!
   name: String
-  subscribedToUser: [SubscribedToFromUserId]
+  subscribedToUser: [SubscribedToUserArray]
 }
 
 type SubscribedToUserArray {
 id: UUID!
 name: String
-userSubscribedTo: [SubscribedToFromUserId]
+userSubscribedTo: [UserSubscribedToArray]
 }
 
 type User {
@@ -37,8 +37,8 @@ type User {
     balance: Float
     profile: Profile
     posts: [Post]
-    userSubscribedTo: [UserSubscribedToArray]
-    subscribedToUser: [SubscribedToUserArray]
+    userSubscribedTo: [UserSubscribedToArray]!
+    subscribedToUser: [SubscribedToUserArray]!
   }
 
 type Profile {
@@ -65,7 +65,7 @@ type Query {
   post(id: UUID!): Post
   user(id: UUID!): User
   profile(id: UUID!): Profile
-  subscribedToUsers: [SubscribedToUserArray]
+  subscribedToUser: [SubscribedToUserArray]
   usersSubscribedTo: [UserSubscribedToArray]
 }
 

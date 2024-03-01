@@ -11,6 +11,7 @@ import {
   changePostDto,
   changeProfileDto,
   changeUserDto,
+  IUserBasic,
 } from './interfaces/interfaces.js';
 
 const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
@@ -41,26 +42,30 @@ const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
           return prisma.memberType.findMany();
         },
         memberType: async ({ id }: { id: UUID }) => {
-          const result = await prisma.memberType.findUnique({
+          const result = await prisma.memberType.findMany({
             where: {
               id,
             },
           });
-          return result;
+
+          return { ...result[0] };
         },
         posts: () => {
           return prisma.post.findMany();
         },
         post: async ({ id }: { id: UUID }) => {
-          const result = await prisma.post.findUnique({
+          const result = await prisma.post.findMany({
             where: {
               id,
             },
           });
-          return result;
+          if (result.length === 0) {
+            return null;
+          }
+          return { ...result[0] };
         },
         users: async () => {
-          const result = await prisma.user.findMany({
+          const resultBasic = await prisma.user.findMany({
             include: {
               profile: {
                 include: {
@@ -68,10 +73,66 @@ const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
                 },
               },
               posts: true,
+              subscribedToUser: {
+                select: {
+                  subscriber: {
+                    include: {
+                      userSubscribedTo: true,
+                    },
+                  },
+                },
+              },
+              userSubscribedTo: {
+                select: {
+                  author: {
+                    include: {
+                      subscribedToUser: true,
+                    },
+                  },
+                },
+              },
             },
           });
+
+          await resolvers.memberType({ id: '1a11112a-1111-1a11-a11a-11aa1a1aa111' });
+          await resolvers.post({ id: '1a11112a-1111-1a11-a11a-11aa1a1aa111' });
+
+          function transformArray(inputArray: IUserBasic[]) {
+            const result = inputArray.map((item: IUserBasic) => {
+              const transformedItem = {
+                id: item.id,
+                name: item.name,
+                balance: item.balance,
+                profile: item.profile,
+                posts: item.posts,
+                subscribedToUser: item.subscribedToUser
+                  ? item.subscribedToUser.map((sub) => ({
+                      id: sub.subscriber.id,
+                      name: sub.subscriber.name,
+                      userSubscribedTo: sub.subscriber.userSubscribedTo.map((subTo) => ({
+                        id: subTo.authorId,
+                      })),
+                    }))
+                  : [],
+                userSubscribedTo: item.userSubscribedTo
+                  ? item.userSubscribedTo.map((sub) => ({
+                      id: sub.author.id,
+                      name: sub.author.name,
+                      subscribedToUser: sub.author.subscribedToUser.map((subTo) => ({
+                        id: subTo.subscriberId,
+                      })),
+                    }))
+                  : [],
+              };
+              return transformedItem;
+            });
+            return result;
+          }
+          const result = transformArray(resultBasic as IUserBasic[]);
+
           return result;
         },
+
         user: async ({ id }: { id: UUID }) => {
           const result = await prisma.user.findUnique({
             where: {
@@ -155,6 +216,7 @@ const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
             subscribedToUser,
           };
         },
+
         profiles: () => {
           return prisma.profile.findMany();
         },

@@ -1,4 +1,5 @@
 import { UUID } from 'crypto';
+import { MemberType } from '@prisma/client';
 
 export interface postDto {
   dto: {
@@ -69,7 +70,7 @@ interface UserSubscribedToFrom {
   authorId: UUID;
 }
 
-export interface ISubscribedToUser {
+interface ISubscribedToUser {
   subscriber: {
     id: UUID;
     name: string;
@@ -78,7 +79,7 @@ export interface ISubscribedToUser {
   };
 }
 
-export interface IUserSubscribedTo {
+interface IUserSubscribedTo {
   author: {
     id: UUID;
     name: string;
@@ -93,6 +94,28 @@ export interface IUserBasic {
   balance: number;
   profile: null | IProfile;
   posts: IPost[];
-  subscribedToUser: ISubscribedToUser[] | null;
-  userSubscribedTo: IUserSubscribedTo[] | null;
+  subscribedToUser?: ISubscribedToUser[] | null;
+  userSubscribedTo?: IUserSubscribedTo[] | null;
+}
+
+interface IUserSubscribedToX {
+  authorId: UUID;
+  subscriberId: UUID;
+}
+
+export interface IUserX {
+  id: UUID;
+  name: string;
+  balance: number;
+  profile: null | IProfile;
+  posts: IPost[];
+  userSubscribedTo: IUserSubscribedToX[];
+  subscribedToUser: IUserSubscribedToX[];
+}
+
+export interface IUserFindMany {
+  profile: { include: { memberType: boolean } };
+  posts: boolean;
+  subscribedToUser?: boolean;
+  userSubscribedTo?: boolean;
 }

@@ -12,6 +12,8 @@ import {
   changeProfileDto,
   changeUserDto,
   IUserBasic,
+  IUserX,
+  IUserFindMany,
 } from './interfaces/interfaces.js';
 
 const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
@@ -64,38 +66,21 @@ const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
           }
           return { ...result[0] };
         },
-        users: async () => {
-          const resultBasic = await prisma.user.findMany({
-            include: {
-              profile: {
-                include: {
-                  memberType: true,
-                },
-              },
-              posts: true,
-              subscribedToUser: {
-                select: {
-                  subscriber: {
-                    include: {
-                      userSubscribedTo: true,
-                    },
-                  },
-                },
-              },
-              userSubscribedTo: {
-                select: {
-                  author: {
-                    include: {
-                      subscribedToUser: true,
-                    },
-                  },
-                },
-              },
-            },
-          });
 
-          await resolvers.memberType({ id: '1a11112a-1111-1a11-a11a-11aa1a1aa111' });
-          await resolvers.post({ id: '1a11112a-1111-1a11-a11a-11aa1a1aa111' });
+        users: async () => {
+          const parseRequestedFields = (query: string) => {
+            const fields: string[] = [];
+            const regex = /(\w+)\s*{/g;
+            let match: RegExpExecArray | null;
+            while ((match = regex.exec(query))) {
+              const field = match[1];
+              if (field) {
+                fields.push(field);
+              }
+            }
+            return fields;
+          };
+          const requestedFields = parseRequestedFields(reqBodyQuery);
 
           function transformArray(inputArray: IUserBasic[]) {
             const result = inputArray.map((item: IUserBasic) => {
@@ -128,9 +113,94 @@ const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
             });
             return result;
           }
-          const result = transformArray(resultBasic as IUserBasic[]);
 
-          return result;
+          function transformArrayX(inputArray: IUserX[]) {
+            const result = inputArray.map((item: IUserX) => {
+              const transformedItem = {
+                id: item.id,
+                name: item.name,
+                balance: item.balance,
+                profile: item.profile,
+                posts: item.posts,
+                subscribedToUser: item.subscribedToUser
+                  ? item.subscribedToUser.map((sub) => ({
+                      id: sub.authorId,
+                    }))
+                  : [],
+                userSubscribedTo: item.userSubscribedTo
+                  ? item.userSubscribedTo.map((sub) => ({
+                      id: sub.subscriberId,
+                    }))
+                  : [],
+              };
+              return transformedItem;
+            });
+            return result;
+          }
+
+          if (requestedFields.length >= 5) {
+            const resultBasic = await prisma.user.findMany({
+              include: {
+                profile: {
+                  include: {
+                    memberType: true,
+                  },
+                },
+                posts: true,
+                subscribedToUser: {
+                  select: {
+                    subscriber: {
+                      include: {
+                        userSubscribedTo: true,
+                      },
+                    },
+                  },
+                },
+                userSubscribedTo: {
+                  select: {
+                    author: {
+                      include: {
+                        subscribedToUser: true,
+                      },
+                    },
+                  },
+                },
+              },
+            });
+
+            await resolvers.memberType({ id: '1a11112a-1111-1a11-a11a-11aa1a1aa111' });
+            await resolvers.post({ id: '1a11112a-1111-1a11-a11a-11aa1a1aa111' });
+
+            const result = transformArray(resultBasic as IUserBasic[]);
+
+            return result;
+          } else {
+            let include: IUserFindMany = {
+              profile: {
+                include: {
+                  memberType: true,
+                },
+              },
+              posts: true,
+              userSubscribedTo: true,
+            };
+
+            if (
+              requestedFields.includes('userSubscribedTo') &&
+              requestedFields.includes('subscribedToUser')
+            ) {
+              include = {
+                ...include,
+                subscribedToUser: true,
+              };
+            }
+
+            const resultBasic = await prisma.user.findMany({
+              include,
+            });
+            const result = transformArrayX(resultBasic as IUserX[]);
+            return result;
+          }
         },
 
         user: async ({ id }: { id: UUID }) => {

@@ -1,5 +1,4 @@
 import { UUID } from 'crypto';
-import { MemberType } from '@prisma/client';
 
 export interface postDto {
   dto: {

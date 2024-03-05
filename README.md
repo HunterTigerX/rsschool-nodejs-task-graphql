@@ -1,3 +1,12 @@
+Steps to test task:
+1. Install dependencies using "npm ci" or "npm install" or similar command in your environment
+2. Create .env file (based on .env.example): ./.env or remove .example from .env.example
+3. Create db file: ./prisma/database.db
+4. Apply pending migrations with the command "npx prisma migrate deploy"
+5. Seed db with the command "npx prisma db seed"
+6. Start server with the command "npm run start"
+7. Start tests "npm run test-queries", "npm run test-mutations", "npm run test-rule", "npm run test-loader", "npm run test-loader-prime" and "npm run test-integrity"
+
 ## Assignment: Graphql
 ### Tasks:
 1. Add logic to the graphql endpoint: ./src/routes/graphql.  
@@ -25,14 +34,6 @@ Make sure the important files have not been changed: npm run test-integrity.
 If the test was partially completed, then it is considered not completed.  
 If the one test was not completed, then the subsequent ones are considered not completed.  
 You are free to use schema-first or stick to the [default code-first](https://github.dev/graphql/graphql-js/blob/ffa18e9de0ae630d7e5f264f72c94d497c70016b/src/__tests__/starWarsSchema.ts).  
-
-Steps to get started:
-1. Install dependencies: npm ci
-2. Create .env file (based on .env.example): ./.env
-3. Create db file: ./prisma/database.db
-4. Apply pending migrations: npx prisma migrate deploy
-5. Seed db: npx prisma db seed
-6. Start server: npm run start
 
 Useful things:
 - Database GUI: npx prisma studio
